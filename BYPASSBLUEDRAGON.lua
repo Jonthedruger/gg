@@ -1,3 +1,16 @@
+local MemoryPatch={}
+local function createWithHex() end 
+function MemoryPatch:createWithHex(lib, offset, hex, flags)
+if not gg.getRangesList(lib)[1] then
+gg.alert("Please open game","")
+os.exit()
+end
+lib = gg.getRangesList(lib)[1].start
+if not flags then
+flags = 32
+end
+gg.setValues({{["address"] = offset + lib,["flags"] = flags,["value"] = "h" .. hex}})
+end
 MemoryPatch:createWithHex("libanogs.so", 0x26F4EC8, "01 00 A0 E3 1E FF 2F E1")
 MemoryPatch:createWithHex("libanogs.so", 0x26F4ECC, "01 00 A0 E3 1E FF 2F E1")
 MemoryPatch:createWithHex("libanogs.so", 0x26F4ED0, "01 00 A0 E3 1E FF 2F E1")
