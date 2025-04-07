@@ -119,3 +119,129 @@ run.RenderStepped:Connect(function()
         end
     end
 end)
+
+
+-- FARM
+getgenv().AutoFarmBox = false
+getgenv().AutoRobCar = false
+getgenv().AutoRobBank = false
+
+local rs = game:GetService("RunService")
+local p = game.Players.LocalPlayer
+local hrp = p.Character and p.Character:WaitForChild("HumanoidRootPart") or nil
+p.CharacterAdded:Connect(function(char)
+    hrp = char:WaitForChild("HumanoidRootPart")
+end)
+
+rs.RenderStepped:Connect(function()
+    if getgenv().AutoFarmBox and hrp then
+        local j = workspace.Systems.BoxJob:GetChildren()
+        if p:GetAttribute("Carrying") == 10000 then return end
+        local b = p.Backpack:FindFirstChild("Box")
+        if b then b.Parent = p.Character end
+        hrp.CFrame = CFrame.new(-1776.31604, 249.147675, -84.1608582)
+        fireproximityprompt(j[3]:FindFirstChild("PlacePrompt"))
+        fireproximityprompt(j[4]:FindFirstChild("GrabPrompt"))
+    end
+
+    if getgenv().AutoRobCar and hrp then
+        for _, car in pairs(workspace.Systems.CarRobbery:GetChildren()) do
+            local gui = car:FindFirstChild("Attachment") and car.Attachment:FindFirstChild("BillboardGui")
+            local prompt = car:FindFirstChild("ProximityPrompt")
+            local status = gui and gui:FindFirstChild("Status") and gui.Status.Text
+            if status and prompt then
+                if status == "[ROBBABLE]" or status == "[ROBBERY IN PROGRESS]" then
+                    hrp.CFrame = car.CFrame
+                    fireproximityprompt(prompt)
+                    break
+                end
+            end
+        end
+    end
+
+    if getgenv().AutoRobBank and hrp then
+        if p:GetAttribute("Carrying") == 10000 then return end
+        if workspace.Systems.Bank.Alarm.Sound.Playing then
+            hrp.CFrame = CFrame.new(-2183.43823, 248.14473, 934.501465)
+            for _, cash in pairs(workspace.Systems.Bank.Cash:GetChildren()) do
+                if cash:FindFirstChild("ProximityPrompt") then
+                    hrp.CFrame = cash.CFrame + Vector3.new(0, 2, 0)
+                    fireproximityprompt(cash.ProximityPrompt)
+                    task.wait(0.2)
+                end
+            end
+        else
+            if workspace.Systems.Bank.TimeHolder.BillboardGui.TextLabel.Text == "The bank is not being robbed." then
+                if not p.Backpack:FindFirstChild("Drill") and not p.Character:FindFirstChild("Drill") then
+                    game:GetService("ReplicatedStorage").Remotes.ItemStore:FireServer("Drill")
+                    task.wait(0.5)
+                end
+                local drill = p.Backpack:FindFirstChild("Drill")
+                if drill then drill.Parent = p.Character end
+                hrp.CFrame = CFrame.new(-2196.01001, 248.14473, 895.635376)
+                task.wait(0.5)
+                fireproximityprompt(workspace.Systems.Bank.Prompts.Part.HackGateway.ProximityPrompt)
+                hrp.CFrame = CFrame.new(-2183.43823, 248.14473, 934.501465)
+                task.wait(0.5)
+                fireproximityprompt(workspace.Systems.Bank.Prompts.Part.DrillSpot.ProximityPrompt)
+                task.wait(0.5)
+                fireproximityprompt(workspace.Systems.Bank.Prompts.Part.DrillSpot.ProximityPrompt)
+            end
+        end
+    end
+end)
+
+getgenv().SellCarriedLoot = function()
+    local prev = hrp.CFrame
+    hrp.CFrame = workspace.Systems.JeweleryRobbery.LootBuy.CFrame + Vector3.new(0, 2, 0)
+    fireproximityprompt(workspace.Systems.JeweleryRobbery.LootBuy.ProximityPrompt)
+    task.wait(0.2)
+    hrp.CFrame = prev
+end
+
+
+getgenv().Aimbot = false
+getgenv().AimbotMethod = "Closest"
+getgenv().AimbotPart = "Head"
+
+-- Inside a RunService loop
+local rs = game:GetService("RunService")
+local cam = workspace.CurrentCamera
+
+rs.RenderStepped:Connect(function()
+    if getgenv().Aimbot then
+        local target = nil
+        local shortest = math.huge
+
+        for _, v in pairs(game.Players:GetPlayers()) do
+            if v ~= p and v.Character and v.Character:FindFirstChild(getgenv().AimbotPart) then
+                local part = v.Character[getgenv().AimbotPart]
+                local distance = (part.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                if distance < shortest then
+                    shortest = distance
+                    target = part
+                end
+            end
+        end
+
+        if target then
+            game:GetService("ReplicatedStorage").Remotes.Look:FireServer(CFrame.new(target.Position))
+        end
+    end
+end)
+
+getgenv().AntiLag = function()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") then
+            obj:Destroy()
+        end
+    end
+end
+
+getgenv().FullBright = function()
+    local lighting = game:GetService("Lighting")
+    lighting.Brightness = 2
+    lighting.ClockTime = 14
+    lighting.FogEnd = 100000
+    lighting.GlobalShadows = false
+end
